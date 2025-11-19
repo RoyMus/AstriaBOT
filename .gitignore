@@ -1,0 +1,7 @@
+﻿.idea
+__pycache__
+.python_packages
+.venv
+.vscode
+.env
+local.settings.json

@@ -1,0 +1,14 @@
+aiohttp
+fastapi
+opencv_python
+pydantic
+requests
+uvicorn
+azure-functions
+azure-storage-queue
+psycopg2-binary
+python-dotenv
+azure-storage-blob
+Pillow
+moviepy
+asyncpg

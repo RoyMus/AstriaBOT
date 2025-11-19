@@ -1,0 +1,40 @@
+---
+# Ingress for external access
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: astria-bot-ingress
+  namespace: astria-bot
+  annotations:
+    kubernetes.io/ingress.class: "azure/application-gateway"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  tls:
+  - hosts:
+    - api.astria-bot.com
+    secretName: astria-bot-tls
+  rules:
+  - host: api.astria-bot.com
+    http:
+      paths:
+      - path: /messages
+        pathType: Prefix
+        backend:
+          service:
+            name: message-service
+            port:
+              number: 80
+      - path: /images
+        pathType: Prefix
+        backend:
+          service:
+            name: image-service
+            port:
+              number: 80
+      - path: /payments
+        pathType: Prefix
+        backend:
+          service:
+            name: payment-service
+            port:
+              number: 80

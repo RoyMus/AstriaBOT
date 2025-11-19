@@ -1,0 +1,91 @@
+version: '3.8'
+
+services:
+  # Local Azure Storage Emulator (optional)
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite:latest
+    ports:
+      - "10000:10000"  # Blob
+      - "10001:10001"  # Queue
+      - "10002:10002"  # Table
+    environment:
+      AZURITE_ACCOUNTS: devstoreaccount1:Eby8vdM02xNOcqFlqUwJYYcyDM+Ds/wIEvgEZDGwD2yNLLFLsdir7+W1DmBLv/Qw==
+
+  # Message Service - WhatsApp message processing
+  message-service:
+    build:
+      context: .
+      dockerfile: services/message-service/Dockerfile
+    ports:
+      - "7071:80"
+    environment:
+      - ENVIRONMENT=development
+      - SERVICEBUS_CONNECTION_STRING=${SERVICEBUS_CONNECTION_STRING}
+      - DATABASE_URL=${DATABASE_URL}
+      - ASTRIA_API_URL=${ASTRIA_API_URL}
+      - ASTRIA_API_KEY=${ASTRIA_API_KEY}
+      - WHATSAPP_VERIFY_TOKEN=${WHATSAPP_VERIFY_TOKEN}
+    depends_on:
+      - azurite
+    volumes:
+      - ./services/message-service:/app
+      - ./shared:/app/shared
+      - ./Utils:/app/Utils
+      - ./db:/app/db
+
+  # Image Service - Astria image processing
+  image-service:
+    build:
+      context: .
+      dockerfile: services/image-service/Dockerfile
+    ports:
+      - "7072:80"
+    environment:
+      - ENVIRONMENT=development
+      - SERVICEBUS_CONNECTION_STRING=${SERVICEBUS_CONNECTION_STRING}
+      - DATABASE_URL=${DATABASE_URL}
+      - ASTRIA_API_URL=${ASTRIA_API_URL}
+      - ASTRIA_API_KEY=${ASTRIA_API_KEY}
+    depends_on:
+      - azurite
+    volumes:
+      - ./services/image-service:/app
+      - ./shared:/app/shared
+      - ./Utils:/app/Utils
+      - ./db:/app/db
+
+  # Payment Service - Payment processing
+  payment-service:
+    build:
+      context: .
+      dockerfile: services/payment-service/Dockerfile
+    ports:
+      - "7073:80"
+    environment:
+      - ENVIRONMENT=development
+      - SERVICEBUS_CONNECTION_STRING=${SERVICEBUS_CONNECTION_STRING}
+      - DATABASE_URL=${DATABASE_URL}
+      - WHATSAPP_API_URL=${WHATSAPP_API_URL}
+      - WHATSAPP_API_KEY=${WHATSAPP_API_KEY}
+    depends_on:
+      - azurite
+    volumes:
+      - ./services/payment-service:/app
+      - ./shared:/app/shared
+      - ./Utils:/app/Utils
+      - ./db:/app/db
+
+  # Maintenance Service - Database cleanup
+  maintenance-service:
+    build:
+      context: .
+      dockerfile: services/maintenance-service/Dockerfile
+    environment:
+      - ENVIRONMENT=development
+      - DATABASE_URL=${DATABASE_URL}
+    depends_on:
+      - azurite
+    volumes:
+      - ./services/maintenance-service:/app
+      - ./shared:/app/shared
+      - ./db:/app/db

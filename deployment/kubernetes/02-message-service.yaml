@@ -1,0 +1,130 @@
+---
+# Message Service Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: message-service
+  namespace: astria-bot
+  labels:
+    app: message-service
+    version: v1
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: message-service
+  template:
+    metadata:
+      labels:
+        app: message-service
+        version: v1
+    spec:
+      containers:
+      - name: message-service
+        image: acryourregistry.azurecr.io/astria-bot/message-service:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+          name: http
+        env:
+        - name: ENVIRONMENT
+          value: "production"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: astria-secrets
+              key: database_url
+        - name: ASTRIA_API_URL
+          value: "https://api.astria.ai"
+        - name: ASTRIA_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: astria-secrets
+              key: astria_api_key
+        - name: WHATSAPP_VERIFY_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: astria-secrets
+              key: whatsapp_verify_token
+        - name: SERVICEBUS_CONNECTION_STRING
+          valueFrom:
+            secretKeyRef:
+              name: astria-secrets
+              key: servicebus_connection_string
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        volumeMounts:
+        - name: logs
+          mountPath: /var/log/app
+      volumes:
+      - name: logs
+        emptyDir: {}
+
+---
+# Message Service Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: message-service
+  namespace: astria-bot
+  labels:
+    app: message-service
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+    name: http
+  selector:
+    app: message-service
+
+---
+# Message Service HPA
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: message-service-hpa
+  namespace: astria-bot
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: message-service
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80

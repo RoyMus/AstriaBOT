@@ -1,0 +1,24 @@
+---
+# Service Bus Namespace
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: servicebus-config
+  namespace: astria-bot
+data:
+  connection_string: "Endpoint=sb://astria-bot.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=${SERVICEBUS_KEY}"
+  namespace: "astria-bot"
+
+---
+# Secret for sensitive data
+apiVersion: v1
+kind: Secret
+metadata:
+  name: astria-secrets
+  namespace: astria-bot
+type: Opaque
+stringData:
+  database_url: "postgresql://user:password@postgres:5432/astria_bot"
+  astria_api_key: "${ASTRIA_API_KEY}"
+  whatsapp_verify_token: "${WHATSAPP_VERIFY_TOKEN}"
+  servicebus_connection_string: "${SERVICEBUS_CONNECTION_STRING}"

@@ -1,0 +1,9 @@
+aiohttp
+pydantic
+asyncpg
+psycopg2-binary
+python-dotenv
+azure-storage-blob
+azure-storage-queue
+azure-identity
+azure-messaging-servicebus

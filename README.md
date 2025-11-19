@@ -2,7 +2,7 @@
 
 A microservices-based WhatsApp bot for AI model training and image processing, built with Azure Functions, Meta's WhatsApp Cloud API, and Astria AI integration.
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Overview](#overview)
 - [Features](#features)
